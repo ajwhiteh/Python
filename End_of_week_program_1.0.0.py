@@ -1,0 +1,536 @@
+import sys
+from PyQt5.QtWidgets import (QMainWindow, QApplication, QWidget, QPushButton, 
+	QComboBox, QLabel, QGridLayout, QGroupBox, QRadioButton, QVBoxLayout,
+	QCheckBox, QLineEdit, QAction, QProgressBar, QCalendarWidget, QFileDialog,
+        QColorDialog, QMessageBox, QFontDialog, QTextEdit)
+from PyQt5.QtCore import pyqtSlot, Qt, QDate, QTime, QDateTime
+from PyQt5.QtGui import QIcon, QColor
+
+class App(QWidget):
+	def __init__(self):
+		super().__init__()
+		self.title = 'End of Week Log'
+		self.left = 10
+		self.top = 30
+		self.width = 640
+		self.height = 480
+		
+		#worm gear selections
+		self.radio_wg_top_y = QRadioButton("Yes")
+		self.radio_wg_top_n = QRadioButton("No")
+		self.radio_wg_top_n.setChecked(True)
+		self.radio_wg_side_y = QRadioButton("Yes")
+		self.radio_wg_side_n = QRadioButton("No")
+		self.radio_wg_side_n.setChecked(True)
+		
+		#saw selection
+		self.saw_list = ['S1', 'S2']
+		self.saws = QComboBox()
+		self.saws.addItems(self.saw_list)
+		
+		#bar entry
+		self.bar = QLineEdit()
+		
+		#crew name entry
+		self.crew_name = QLineEdit()
+		
+		#date stamp
+		self.date = QLineEdit()
+		self.now = QDate.currentDate()
+		self.date.setText(self.now.toString(Qt.ISODate))
+		
+		#start selection
+		self.rad_start_y = QRadioButton("Yes")
+		self.rad_start_n = QRadioButton("No")
+		self.rad_start_na = QRadioButton("Not used")
+		self.rad_start_n.setChecked(True)
+		
+		#filter selection
+		self.rad_filt_swap = QRadioButton("Swapped")
+		self.rad_filt_non = QRadioButton("No Filter")
+		self.rad_filt_non.setChecked(True)
+		
+		#Clutch selections
+		#operations
+		self.chk_cltch_cln = QCheckBox("Cleaned")
+		self.chk_cltch_grsd = QCheckBox("Greased")
+		#damage selection
+		self.rad_dmg_y = QRadioButton("Yes")
+		self.rad_dmg_n = QRadioButton("No")
+		self.rad_dmg_y.setChecked(True)
+		#burn selection
+		self.rad_brn_y = QRadioButton("Yes")
+		self.rad_brn_n = QRadioButton("No")
+		self.rad_brn_y.setChecked(True)
+		
+		#Bearing slections
+		#grease check
+		self.chk_bear_grsd = QCheckBox("Greased")
+		#worn selection
+		self.rad_bear_worn_y = QRadioButton("Yes")
+		self.rad_bear_worn_n = QRadioButton("No")
+		self.rad_bear_worn_y.setChecked(True)
+		#beveled selection
+		self.rad_bear_bev_y = QRadioButton("Yes")
+		self.rad_bear_bev_n = QRadioButton("No")
+		self.rad_bear_bev_y.setChecked(True)
+		
+		#sprocket selections
+		#damage selection
+		self.rad_spkt_dmg_y = QRadioButton("Yes")
+		self.rad_spkt_dmg_n = QRadioButton("No")
+		self.rad_spkt_dmg_y.setChecked(True)
+		
+		#chain catch intact selection
+		self.rad_chnctch_y = QRadioButton("Yes")
+		self.rad_chnctch_n = QRadioButton("No")
+		self.rad_chnctch_n.setChecked(True)
+		
+		#bar checkoff list
+		self.chk_bar_cln = QCheckBox("Cleaned")
+		self.chk_bar_dbr = QCheckBox("Deburred")
+		
+		#spark plug selections
+		self.rad_sprkp_disc_y = QRadioButton("Yes")
+		self.rad_sprkp_disc_n = QRadioButton("No")
+		self.rad_sprkp_wet_y = QRadioButton("Yes")
+		self.rad_sprkp_wet_n = QRadioButton("No")
+		self.rad_sprkp_cb_y = QRadioButton("Yes")
+		self.rad_sprkp_cb_n = QRadioButton("No")
+		self.rad_sprkp_disc_y.setChecked(True)
+		self.rad_sprkp_wet_y.setChecked(True)
+		self.rad_sprkp_cb_y.setChecked(True)
+		
+		#cap selections
+		self.rad_oil_leak_y = QRadioButton("Yes")
+		self.rad_oil_leak_n = QRadioButton("No")
+		self.rad_gas_leak_y = QRadioButton("Yes")
+		self.rad_gas_leak_n = QRadioButton("No")
+		self.rad_gas_leak_y.setChecked(True)
+		self.rad_oil_leak_y.setChecked(True)
+		self.chk_oil_cln = QCheckBox("O-ring Cleaned")
+		self.chk_gas_cln = QCheckBox("O-ring Cleaned")
+		
+		#Sliders checks
+		self.chk_sldr_1 = QCheckBox("Slider 1")
+		self.chk_sldr_2 = QCheckBox("Slider 2")
+		
+		#pull cor selections
+		self.rad_pc_fray_y = QRadioButton("Yes")
+		self.rad_pc_fray_n = QRadioButton("No")
+		self.rad_pc_short_y = QRadioButton("Yes")
+		self.rad_pc_short_n = QRadioButton("No")
+		self.rad_pc_rtact_y = QRadioButton("Yes")
+		self.rad_pc_rtact_n = QRadioButton("No")
+		self.rad_pc_fray_y.setChecked(True)
+		self.rad_pc_short_y.setChecked(True)
+		self.rad_pc_rtact_n.setChecked(True)
+		
+		#create UI
+		self.initUI()
+		
+	
+	def initUI(self):
+		self.setWindowTitle(self.title)
+		self.setGeometry(self.left, self.top, self.width, self.height)
+		
+		grid = QGridLayout()
+		grid.addWidget(self.createSawGroup(), 0, 0)
+		grid.addWidget(self.createBarNumGroup(), 0, 1)
+		grid.addWidget(self.createNameGroup(), 0, 2)
+		grid.addWidget(self.createDateGroup(), 0, 3)
+		grid.addWidget(self.createSAVE(), 0, 5)
+		grid.addWidget(self.createStartGroup(), 1, 0)
+		grid.addWidget(self.createFilterGroup(), 1, 1)
+		grid.addWidget(self.createClutchGroup(), 2, 0)
+		grid.addWidget(self.createBaringGroup(), 2, 1)
+		grid.addWidget(self.createSprocketGroup(), 1, 3)
+		grid.addWidget(self.createChainCatchGroup(), 1, 4)
+		grid.addWidget(self.createWormGroup(), 2, 2)
+		grid.addWidget(self.createBarGroup(), 1, 5)
+		grid.addWidget(self.createSparkGroup(), 2, 3)
+		grid.addWidget(self.createCapsGroup(), 2, 4)
+		grid.addWidget(self.createSliderGroup(), 1, 2)
+		grid.addWidget(self.createPullcordGroup(), 2, 5)
+		self.setLayout(grid)		
+		
+		saveFile = QAction("&Save File", self)
+		saveFile.setShortcut("Ctrl+S")
+		saveFile.setStatusTip('Save File')
+		saveFile.triggered.connect(self.save_click)
+		
+		
+		self.show()
+	
+	
+        
+	def createSAVE(self):
+		save_button = QPushButton('&Save', self)
+		save_button.setToolTip('Save all choices to a log')
+		save_button.clicked.connect(self.save_click)
+		
+		return save_button
+		
+	@pyqtSlot()
+	def save_click(self):
+		options = QFileDialog.Options()
+		options |= QFileDialog.DontUseNativeDialog
+		auto_name = "test5" #saw num and date
+		name, _ = QFileDialog.getSaveFileName(self,"QFileDialog.getSaveFileName()",auto_name,"All Files (*);;Text Files (*.txt)", options=options)
+		
+		file = open(name, 'w+')
+		text = self.output_text()
+		file.write(text)
+		file.close()
+		
+	def createWormGroup(self):
+		groupBox = QGroupBox("Worm Gear")
+		
+		#inner top wear group		
+		topGroup = QGroupBox("Top Wear")
+		top_vbox = QVBoxLayout()
+		top_vbox.addWidget(self.radio_wg_top_y)
+		top_vbox.addWidget(self.radio_wg_top_n)
+		top_vbox.addStretch(1)
+		topGroup.setLayout(top_vbox)
+		
+		#inner side wear group
+		sideGroup = QGroupBox("Side Wear")
+		side_vbox = QVBoxLayout()
+		side_vbox.addWidget(self.radio_wg_side_y)
+		side_vbox.addWidget(self.radio_wg_side_n)
+		side_vbox.addStretch(1)
+		sideGroup.setLayout(side_vbox)
+
+		#Worm gear group
+		vbox = QVBoxLayout()
+		vbox.addWidget(topGroup)
+		vbox.addWidget(sideGroup)
+		vbox.addStretch(1)
+		groupBox.setLayout(vbox)
+		
+		return groupBox
+		
+	def output_text(self):
+		wg_condition = "Worm Gear is"
+		if self.radio_wg_top_y.isChecked():
+			wg_condition += " worn on top"
+		if self.radio_wg_side_y.isChecked():
+			wg_condition += " worn on side"
+		if self.radio_wg_top_n.isChecked() and self.radio_wg_side_n.isChecked():
+			wg_condition += " operational"
+			
+		wg_condition += "\n"
+			
+		return wg_condition
+		
+	def createSawGroup(self):
+		groupBox = QGroupBox("Saw")
+		box = QVBoxLayout()
+		
+		box.addWidget(self.saws)
+		box.addStretch(1)
+
+		groupBox.setLayout(box)
+		
+		return groupBox
+		
+	def createBarNumGroup(self):
+		groupBox = QGroupBox("Bar #")
+		
+		box = QVBoxLayout()
+		box.addWidget(self.bar)
+		box.addStretch(1)
+		groupBox.setLayout(box)
+		
+		return groupBox
+		
+	def createNameGroup(self):
+		groupBox = QGroupBox("Name")
+		
+		box = QVBoxLayout()
+		box.addWidget(self.crew_name)
+		box.addStretch(1)
+		groupBox.setLayout(box)
+		
+		return groupBox
+		
+	def createDateGroup(self):
+		groupBox = QGroupBox("Date")
+		
+		box = QVBoxLayout()
+		box.addWidget(self.date)
+		box.addStretch(1)
+		
+		groupBox.setLayout(box)
+		
+		return groupBox
+		
+	def createStartGroup(self):
+		groupBox = QGroupBox("Starts")
+
+		vbox = QVBoxLayout()
+		vbox.addWidget(self.rad_start_y)
+		vbox.addWidget(self.rad_start_y)
+		vbox.addWidget(self.rad_start_na)
+		vbox.addStretch(1)
+		groupBox.setLayout(vbox)
+
+		return groupBox
+		
+	def createFilterGroup(self):
+		groupBox = QGroupBox("Air Filter")
+
+		vbox = QVBoxLayout()
+		vbox.addWidget(self.rad_filt_swap)
+		vbox.addWidget(self.rad_filt_non)
+		vbox.addStretch(1)
+		groupBox.setLayout(vbox)
+
+		return groupBox
+		
+	def createClutchGroup(self):
+		groupBox = QGroupBox("Clutch Drum")
+		
+		damGroup = QGroupBox("Damage")
+		dam_vbox = QVBoxLayout()
+		dam_vbox.addWidget(self.rad_dmg_y)
+		dam_vbox.addWidget(self.rad_dmg_n)
+		dam_vbox.addStretch(1)
+		damGroup.setLayout(dam_vbox)
+		
+		burnGroup = QGroupBox("Burns")
+		burn_vbox = QVBoxLayout()
+		burn_vbox.addWidget(self.rad_brn_y)
+		burn_vbox.addWidget(self.rad_brn_n)
+		burn_vbox.addStretch(1)
+		burnGroup.setLayout(burn_vbox)
+
+		#Clutch drum group
+		vbox = QVBoxLayout()
+		vbox.addWidget(self.chk_cltch_cln)
+		vbox.addWidget(self.chk_cltch_grsd)
+		vbox.addWidget(damGroup)
+		vbox.addWidget(burnGroup)
+		vbox.addStretch(1)
+		groupBox.setLayout(vbox)
+
+		return groupBox
+		
+	def createBaringGroup(self):
+		groupBox = QGroupBox("Clutch Bearing")
+
+		wornGroup = QGroupBox("Worn")
+		worn_vbox = QVBoxLayout()
+		worn_vbox.addWidget(self.rad_bear_worn_y)
+		worn_vbox.addWidget(self.rad_bear_worn_n)
+		worn_vbox.addStretch(1)
+		wornGroup.setLayout(worn_vbox)
+		
+		bevelGroup = QGroupBox("Beveled")
+		bevel_vbox = QVBoxLayout()
+		bevel_vbox.addWidget(self.rad_bear_bev_y)
+		bevel_vbox.addWidget(self.rad_bear_bev_n)
+		bevel_vbox.addStretch(1)
+		bevelGroup.setLayout(bevel_vbox)
+
+		#Clutch baring group
+		vbox = QVBoxLayout()
+		vbox.addWidget(self.chk_bear_grsd)
+		vbox.addWidget(wornGroup)
+		vbox.addWidget(bevelGroup)
+		vbox.addStretch(1)
+		groupBox.setLayout(vbox)
+
+		return groupBox
+		
+	def createSprocketGroup(self):
+		groupBox = QGroupBox("Sprocket")
+		
+		damGroup = QGroupBox("Worn")
+		dam_vbox = QVBoxLayout()
+		dam_vbox.addWidget(self.rad_spkt_dmg_y)
+		dam_vbox.addWidget(self.rad_spkt_dmg_n)
+		dam_vbox.addStretch(1)
+		damGroup.setLayout(dam_vbox)
+
+		#Sprocket group
+		vbox = QVBoxLayout()
+		vbox.addWidget(damGroup)
+		vbox.addStretch(1)
+		groupBox.setLayout(vbox)
+
+		return groupBox
+		
+	def createChainCatchGroup(self):
+		groupBox = QGroupBox("Chain Catch")
+		
+		intGroup = QGroupBox("Intact")
+		int_vbox = QVBoxLayout()
+		int_vbox.addWidget(self.rad_chnctch_y)
+		int_vbox.addWidget(self.rad_chnctch_n)
+		int_vbox.addStretch(1)
+		intGroup.setLayout(int_vbox)
+
+		#Chain-catch group
+		vbox = QVBoxLayout()
+		vbox.addWidget(intGroup)
+		vbox.addStretch(1)
+		groupBox.setLayout(vbox)
+
+		return groupBox
+		
+	def createBarGroup(self):
+		groupBox = QGroupBox("Bar")
+		
+		vbox = QVBoxLayout()
+		vbox.addWidget(self.chk_bar_cln)
+		vbox.addWidget(self.chk_bar_dbr)
+		vbox.addStretch(1)
+		groupBox.setLayout(vbox)
+		
+		return groupBox
+		
+	def createSparkGroup(self):
+		groupBox = QGroupBox("Sparkplug")
+			
+		#inner discolor group
+		dcgroup = QGroupBox("Discolored")
+		dc_vbox = QVBoxLayout()
+		dc_vbox.addWidget(self.rad_sprkp_disc_y)
+		dc_vbox.addWidget(self.rad_sprkp_disc_n)
+		dc_vbox.addStretch(1)
+		dcgroup.setLayout(dc_vbox)
+		
+		
+		#inner wet group
+		wetgroup = QGroupBox("Wet")
+		wet_vbox = QVBoxLayout()
+		wet_vbox.addWidget(self.rad_sprkp_wet_y)
+		wet_vbox.addWidget(self.rad_sprkp_wet_n)
+		wet_vbox.addStretch(1)
+		wetgroup.setLayout(wet_vbox)
+		
+		#inner carbon build-up group
+		carbongroup = QGroupBox("Carbon Build-up")
+		car_vbox = QVBoxLayout()
+		car_vbox.addWidget(self.rad_sprkp_cb_y)
+		car_vbox.addWidget(self.rad_sprkp_cb_n)
+		car_vbox.addStretch(1)
+		carbongroup.setLayout(car_vbox)
+		
+		#sparkplug group
+		vbox = QVBoxLayout()
+		vbox.addWidget(dcgroup)
+		vbox.addWidget(wetgroup)
+		vbox.addWidget(carbongroup)
+		vbox.addStretch(1)
+		groupBox.setLayout(vbox)
+		
+		return groupBox
+		
+	def createCapsGroup(self):
+		groupBox = QGroupBox("Caps")
+		
+		#inner oil group
+		oil_group = QGroupBox("Oil")
+		oil_vbox = QVBoxLayout()
+		oil_vbox.addWidget(self.chk_oil_cln)
+		#inner inner leak group
+		oil_leak_group = QGroupBox("Leaks")
+		leak_vbox = QVBoxLayout()
+		leak_vbox.addWidget(self.rad_oil_leak_y)
+		leak_vbox.addWidget(self.rad_oil_leak_n)
+		leak_vbox.addStretch(1)
+		oil_leak_group.setLayout(leak_vbox)
+		#end inner inner....
+		oil_vbox.addWidget(oil_leak_group)
+		oil_vbox.addStretch(1)
+		oil_group.setLayout(oil_vbox)
+		
+		#inner gas group
+		gas_group = QGroupBox("Gas")
+		gas_vbox = QVBoxLayout()
+		gas_vbox.addWidget(self.chk_gas_cln)
+		#inner inner leak group
+		gas_leak_group = QGroupBox("Leaks")
+		gleak_vbox = QVBoxLayout()
+		gleak_vbox.addWidget(self.rad_gas_leak_y)
+		gleak_vbox.addWidget(self.rad_gas_leak_n)
+		gleak_vbox.addStretch(1)
+		gas_leak_group.setLayout(gleak_vbox)
+		#end inner inner....
+		gas_vbox.addWidget(gas_leak_group)
+		gas_vbox.addStretch(1)
+		gas_group.setLayout(gas_vbox)
+		
+		#caps group
+		vbox = QVBoxLayout()
+		vbox.addWidget(oil_group)
+		vbox.addWidget(gas_group)
+		vbox.addStretch(1)
+		groupBox.setLayout(vbox)
+		
+		return groupBox
+		
+	def createSliderGroup(self):
+		groupBox = QGroupBox("Sliders")
+		sliderGroup = QGroupBox("In Place")
+		
+		slider_vbox = QVBoxLayout()
+		slider_vbox.addWidget(self.chk_sldr_1)
+		slider_vbox.addWidget(self.chk_sldr_2)
+		slider_vbox.addStretch(1)
+		sliderGroup.setLayout(slider_vbox)
+		
+		vbox = QVBoxLayout()
+		vbox.addWidget(sliderGroup)
+		vbox.addStretch(1)
+		groupBox.setLayout(vbox)
+		
+		return groupBox
+		
+	def createPullcordGroup(self):
+		groupBox = QGroupBox("Pull Cord")
+		fray_group = QGroupBox("Frayed")
+		short_group = QGroupBox("Short Pull")
+		ret_group = QGroupBox("Fully Retracts")
+		
+		#inner fray group
+		fray_vbox = QVBoxLayout()
+		fray_vbox.addWidget(self.rad_pc_fray_y)
+		fray_vbox.addWidget(self.rad_pc_fray_n)
+		fray_vbox.addStretch(1)
+		fray_group.setLayout(fray_vbox)
+		
+		#inner short pull group
+		short_vbox = QVBoxLayout()
+		short_vbox.addWidget(self.rad_pc_short_y)
+		short_vbox.addWidget(self.rad_pc_short_n)
+		short_vbox.addStretch(1)
+		short_group.setLayout(short_vbox)
+		
+		#inner full retract group
+		ret_vbox = QVBoxLayout()
+		ret_vbox.addWidget(self.rad_pc_rtact_n)
+		ret_vbox.addWidget(self.rad_pc_rtact_y)
+		ret_vbox.addStretch(1)
+		ret_group.setLayout(ret_vbox)
+		
+		#pull cord group
+		vbox = QVBoxLayout()
+		vbox.addWidget(fray_group)
+		vbox.addWidget(short_group)
+		vbox.addWidget(ret_group)
+		vbox.addStretch(1)
+		groupBox.setLayout(vbox)
+		
+		return groupBox
+
+		
+		
+#execute application
+if __name__ == '__main__':
+	app = QApplication(sys.argv)
+	ex = App()
+	sys.exit(app.exec_())
