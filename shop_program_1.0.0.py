@@ -1,11 +1,24 @@
 import sys
 import csv
+import itertools
 from PyQt5.QtWidgets import (QMainWindow, QApplication, QPushButton, 
 	QWidget, QAction, QTabWidget, QVBoxLayout, QScrollArea, QGridLayout,
-	 QComboBox, QGroupBox, QLineEdit, qApp)
+	 QComboBox, QGroupBox, QLineEdit, qApp, QMessageBox, QLabel)
 from PyQt5.QtGui import QIcon
 from PyQt5.QtCore import pyqtSlot, Qt
 from csv_mod import CSV_Handle
+
+class ScrollMessageBox(QMessageBox):
+	def __init__(self, l, *args, **kwargs):
+		QMessageBox.__init__(self, *args, **kwargs)
+		scroll = QScrollArea(self)
+		scroll.setWidgetResizable(True)
+		self.content = QWidget()
+		scroll.setWidget(self.content)
+		lay = QVBoxLayout(self.content)
+		lay.addWidget(QLabel(l, self))
+		self.layout().addWidget(scroll, 0, 0, 1, self.layout().columnCount())
+		self.setStyleSheet("QScrollArea{min-width:400 px; min-height: 300 px}")
  
 class App(QMainWindow):
  
@@ -17,8 +30,8 @@ class App(QMainWindow):
 		self.title = 'Shop Tech'
 		self.left = 10
 		self.top = 30
-		self.width = 640
-		self.height = 520
+		self.width = 940
+		self.height = 720
 		self.setWindowTitle(self.title)
 		self.setGeometry(self.left, self.top, self.width, self.height)
 		
@@ -39,6 +52,7 @@ class App(QMainWindow):
 		
 		toolsMenu = menubar.addMenu('&Tools')
 		toolsMenu.addAction(updateAct)
+		toolsMenu.addAction(todoAct)
 		
 		self.table_widget = MyTableWidget(self)
 		self.setCentralWidget(self.table_widget)
@@ -50,12 +64,58 @@ class App(QMainWindow):
 	@pyqtSlot()
 	def csv_update(self):
 		'''transfers data from report folder to csv'''
-		#print('Updated')
 		self.csv_data.fill_file_list()
-		self.csv_data.csv_transfer()
+		if not self.csv_data.get_files_list():
+			QMessageBox.about(self, "Update", "No Files to Update   \n")
+		else:
+			self.csv_data.csv_transfer()
+			QMessageBox.about(self, "Update", "Files Updated   \n")
 		
+	@pyqtSlot()
 	def todo(self):
 		'''Opens window with all saws needing attention'''
+		# Get saw list from maint_logs.csv with newest errors
+		#test_saw = ['S1']
+		saws = ['S1', 'S2', 'S4', 'S5', 'S7', 'S8', 'S9', 'S10', 'S11', 'S12',
+			'S15', 'S17', 'S18', 'S19', 'S21', 'S25', 'S27', 'S28', 'S30', 'S250']
+		problem = ['', 'No start', 'Needs air filter', 'worm gear top wear',
+			'worm gear side wear', 'clutch drum not clean', 'clutch drum not greased',
+			'clutch drum damage', 'clutch drum burn', 'bearing not greased',
+			'bearing worn', 'bearing beveled', 'sprocket damaged', 'chain catch broken',
+			'bar not cleaned', 'bar not deburred', 'sparkplug discolored',
+			'sparkplug wet', 'sparkplug carbon buildup', 'oil cap leaks',
+			'gas cap leaks', 'oil cap not clean', 'gas cap not clean', 
+			'slider 1 missing', 'slider 2 missing', 'pull cord frayed',
+			'pull cord short',	'pull cord wont retact']
+
+		saw_message = str()
+		saw_master = ['']
+		saw_master += itertools.repeat('True', 2)
+		saw_master += itertools.repeat('False', 2)
+		saw_master += itertools.repeat('True', 5)
+		saw_master.append('False')
+		saw_master.append('True')
+		saw_master.append('False')
+		saw_master += itertools.repeat('True', 15)
+		saw_master.append('')
+		for saw in saws:
+			saw_data = self.csv_data.csv_search_latest(saw)
+			saw_master[0] = saw
+			del saw_data[1:4]
+			if saw_data != saw_master:
+				saw_message += saw + ':'
+				for i in range(len(saw_data) - 1):
+					if saw_data[i] != saw_master[i]:
+						saw_message += ' ' + problem[i] + ','
+				if saw_data[-1] != saw_master[-1]:
+					saw_message += ' ' + saw_data[-1] + ','
+				saw_message = saw_message[:-1]
+				saw_message += '\n'
+				
+		
+		#print(saw_master, saw_data, saw_message)
+		output = ScrollMessageBox(saw_message, None)
+		output.exec_()
 
 
 class MyTableWidget(QWidget):
@@ -248,7 +308,7 @@ class MyTableWidget(QWidget):
 		
 	@pyqtSlot()
 	def saw_select_maint_logs(self):
-		'''Take selected saw and display latest info'''
+		'''Take selected saw and display latest info from maint_logs csv'''
 		saw_num = str(self.saws1.currentText())
 		#lambda functions for bool to str
 		t_to_y = lambda x : 'Yes' if x == 'True' else 'No'
@@ -324,7 +384,8 @@ class MyTableWidget(QWidget):
 		
 	@pyqtSlot()
 	def saw_select_op_logs(self):
-		print(str(self.saws2.currentText()))
+		'''Take Selected saw and display operations over time'''
+		#print(str(self.saws2.currentText()))
 		
 		
 	
