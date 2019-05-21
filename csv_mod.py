@@ -14,6 +14,7 @@ class CSV_Handle:
 		self.files_location = "/home/pi/Desktop/Reports/"
 		self.win_share_location = "/media/windowsshare/"
 		self.win_share_maint_log_csv = "Saw_maint_logs.csv"
+		self.win_share_ops_log_csv = "Saw_ops_logs.csv"
 		self.current_csv = []
 		self.csv_header = []
 		self.csv_data = []
@@ -78,9 +79,7 @@ class CSV_Handle:
 				spkt_dmg, chn_ctch, bar_cln, bar_dbr, sprkp_disc, sprkp_wet,
 				sprkp_cb, oil_leak, gas_leak, oil_cln, gas_cln, sldr_1, sldr_2,
 				pull_crd_fray, pull_crd_short, pull_crd_rtact, misc]
-			
-			
-				
+					
 	def writer(self):
 		'''take file_input, convert via file_to_csvLine and write into csv'''
 		try:
@@ -102,6 +101,11 @@ class CSV_Handle:
 				'slider 1', 'slider 2', 'pull cord fray', 'pull cord short',
 				'pull cord retacts', 'misc comments']
 		header_writer = csv.writer(open(self.win_share_location + self.win_share_maint_log_csv, "w"))
+		header_writer.writerow(header)
+		
+	def create_csv_ops_header(self):
+		header = ['saw', 'date', 'issue', 'solution']
+		header_writer = csv.writer(open(self.win_share_location + self.win_share_ops_log_csv, "w"))
 		header_writer.writerow(header)
 		
 	def csv_transfer(self):
@@ -143,7 +147,26 @@ class CSV_Handle:
 		except:
 			output = list(itertools.repeat('', 32))
 			return output
-		
+			
+	def operation_input(self, data):
+		try:
+			line_writer = csv.writer(open(self.win_share_location + self.win_share_ops_log_csv, "a"))
+		except FileNotFoundError:
+			print("Unable to locate csv file")
+		else:
+			line_writer.writerow(data)
+			
+	def operations_get(self, saw):
+		try:
+			current_csv = csv.reader(open(self.win_share_location + self.win_share_ops_log_csv, 'r'))
+		except:
+			print("Error while retreiving data")
+		else:
+			data_output = str()
+			for row in current_csv:
+				if row[0] == saw:
+					data_output += row[1] + ': ' + row[2] + ' -> ' + row[3] + '\n'
+			return data_output
 			
 	def test_fcn(self):
 		#self.create_csv_header()
@@ -154,7 +177,8 @@ class CSV_Handle:
 		#self.fill_file_list()
 		#self.files_list = ['test']
 		#self.csv_transfer()
-		self.csv_search_latest('S1')
+		#self.csv_search_latest('S1')
+		#self.create_csv_ops_header()
 		pass
 
 #if __name__ == '__main__':
